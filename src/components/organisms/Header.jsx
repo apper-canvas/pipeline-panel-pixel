@@ -47,8 +47,7 @@ const Header = ({
               className="hidden md:block w-80"
             />
           )}
-          
-          {actionButton && (
+{actionButton && (
             <div className="hidden sm:block">
               {actionButton}
             </div>
@@ -74,7 +73,7 @@ const Header = ({
       )}
       
       {/* Mobile action button */}
-      {actionButton && (
+{actionButton && (
         <div className="sm:hidden mt-4">
           {actionButton}
         </div>

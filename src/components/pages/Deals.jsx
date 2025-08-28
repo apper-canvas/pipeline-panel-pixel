@@ -1,114 +1,165 @@
+import { useState, useEffect } from "react";
 import { useOutletContext } from "react-router-dom";
 import { motion } from "framer-motion";
 import Header from "@/components/organisms/Header";
 import ApperIcon from "@/components/ApperIcon";
-
+import Button from "@/components/atoms/Button";
+import DealColumn from "@/components/molecules/DealColumn";
+import DealModal from "@/components/organisms/DealModal";
+import dealService from "@/services/api/dealService";
+import { toast } from "react-toastify";
 const Deals = () => {
   const { onMenuClick } = useOutletContext();
 
+const [deals, setDeals] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [editingDeal, setEditingDeal] = useState(null);
+  const [draggedDeal, setDraggedDeal] = useState(null);
+
   const pipelineStages = [
-    { name: "Prospecting", count: 12, color: "from-blue-400 to-blue-500" },
-    { name: "Qualification", count: 8, color: "from-yellow-400 to-yellow-500" },
-    { name: "Proposal", count: 5, color: "from-orange-400 to-orange-500" },
-    { name: "Negotiation", count: 3, color: "from-red-400 to-red-500" },
-    { name: "Closed Won", count: 15, color: "from-green-400 to-green-500" }
+    { id: "lead", name: "Lead", color: "from-blue-400 to-blue-500" },
+    { id: "qualified", name: "Qualified", color: "from-yellow-400 to-yellow-500" },
+    { id: "proposal", name: "Proposal", color: "from-orange-400 to-orange-500" },
+    { id: "negotiation", name: "Negotiation", color: "from-red-400 to-red-500" },
+    { id: "closed-won", name: "Closed Won", color: "from-green-400 to-green-500" }
   ];
 
-  return (
+  useEffect(() => {
+    loadDeals();
+  }, []);
+
+  const loadDeals = async () => {
+    try {
+      setLoading(true);
+      const dealsData = await dealService.getAll();
+      setDeals(dealsData);
+    } catch (error) {
+      toast.error("Failed to load deals");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddDeal = () => {
+    setEditingDeal(null);
+    setShowModal(true);
+  };
+
+  const handleEditDeal = (deal) => {
+    setEditingDeal(deal);
+    setShowModal(true);
+  };
+
+  const handleDeleteDeal = async (dealId) => {
+    if (!confirm("Are you sure you want to delete this deal?")) return;
+
+    try {
+      await dealService.delete(dealId);
+      setDeals(prev => prev.filter(d => d.Id !== dealId));
+      toast.success("Deal deleted successfully");
+    } catch (error) {
+      toast.error("Failed to delete deal");
+    }
+  };
+
+  const handleSaveDeal = async (dealData) => {
+    try {
+      if (editingDeal) {
+        const updatedDeal = await dealService.update(editingDeal.Id, dealData);
+        setDeals(prev => prev.map(d => d.Id === editingDeal.Id ? updatedDeal : d));
+        toast.success("Deal updated successfully");
+      } else {
+        const newDeal = await dealService.create(dealData);
+        setDeals(prev => [...prev, newDeal]);
+        toast.success("Deal created successfully");
+      }
+      setShowModal(false);
+    } catch (error) {
+      throw error; // Let modal handle the error
+    }
+  };
+
+  const handleDragStart = (deal) => {
+    setDraggedDeal(deal);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedDeal(null);
+  };
+
+  const handleDrop = async (stageId, deal) => {
+    if (deal.stage === stageId) return;
+
+    try {
+      // Optimistic update
+      setDeals(prev => prev.map(d => 
+        d.Id === deal.Id ? { ...d, stage: stageId } : d
+      ));
+
+      // Update on server
+      await dealService.update(deal.Id, { stage: stageId });
+      toast.success(`Deal moved to ${pipelineStages.find(s => s.id === stageId)?.name}`);
+    } catch (error) {
+      // Revert on error
+      setDeals(prev => prev.map(d => 
+        d.Id === deal.Id ? { ...d, stage: deal.stage } : d
+      ));
+      toast.error("Failed to update deal stage");
+    }
+  };
+
+  const getDealsForStage = (stageId) => {
+    return deals.filter(deal => deal.stage === stageId);
+  };
+
+return (
     <div className="min-h-screen">
       <Header
         title="Deals"
         subtitle="Track your sales pipeline and opportunities"
         onMenuClick={onMenuClick}
+        actionButton={
+          <Button onClick={handleAddDeal} className="flex items-center space-x-2">
+            <ApperIcon name="Plus" size={16} />
+            <span>Add Deal</span>
+          </Button>
+        }
       />
       
-      <div className="p-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden"
-        >
-          <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-blue-100">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-                <ApperIcon name="Target" size={24} className="text-white" />
-              </div>
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900">Sales Pipeline</h2>
-                <p className="text-gray-600">Coming soon - Visual deal tracking</p>
-              </div>
-            </div>
+<div className="p-6">
+        {loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
           </div>
-          
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              {pipelineStages.map((stage, index) => (
-                <motion.div
-                  key={stage.name}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="bg-gray-50 rounded-lg p-4 text-center"
-                >
-                  <div className={`w-8 h-8 bg-gradient-to-r ${stage.color} rounded-full mx-auto mb-3 flex items-center justify-center`}>
-                    <span className="text-white font-semibold text-sm">{stage.count}</span>
-                  </div>
-                  <h3 className="font-medium text-gray-900 mb-1">{stage.name}</h3>
-                  <p className="text-sm text-gray-500">{stage.count} deals</p>
-                </motion.div>
-              ))}
-            </div>
-            
-            <div className="mt-8 text-center">
-              <div className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-100 to-blue-200 rounded-lg border border-blue-200">
-                <ApperIcon name="Clock" size={20} className="text-blue-600 mr-2" />
-                <span className="text-blue-800 font-medium">Pipeline visualization coming soon</span>
-              </div>
-              <p className="text-gray-600 mt-3 max-w-md mx-auto">
-                We're building a powerful kanban board to help you visualize and manage your sales pipeline. 
-                Track deals through each stage and never miss an opportunity.
-              </p>
-            </div>
+        ) : (
+          <div className="flex space-x-6 overflow-x-auto pb-6">
+            {pipelineStages.map((stage, index) => (
+              <DealColumn
+                key={stage.id}
+                stage={stage}
+                deals={getDealsForStage(stage.id)}
+                onEditDeal={handleEditDeal}
+                onDeleteDeal={handleDeleteDeal}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                onDrop={handleDrop}
+                draggedDeal={draggedDeal}
+                index={index}
+              />
+            ))}
           </div>
-        </motion.div>
-
-        {/* Feature Preview */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-white rounded-xl border border-gray-100 shadow-sm p-6"
-          >
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-green-100 to-green-200 rounded-lg flex items-center justify-center">
-                <ApperIcon name="DollarSign" size={20} className="text-green-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">Revenue Tracking</h3>
-            </div>
-            <p className="text-gray-600">
-              Monitor deal values and revenue forecasts across your pipeline stages.
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-white rounded-xl border border-gray-100 shadow-sm p-6"
-          >
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-100 to-purple-200 rounded-lg flex items-center justify-center">
-                <ApperIcon name="Calendar" size={20} className="text-purple-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">Activity Timeline</h3>
-            </div>
-            <p className="text-gray-600">
-              Track interactions, calls, meetings, and follow-ups for each deal.
-            </p>
-          </motion.div>
-        </div>
+        )}
       </div>
+
+      {showModal && (
+        <DealModal
+          deal={editingDeal}
+          isOpen={showModal}
+          onClose={() => setShowModal(false)}
+          onSave={handleSaveDeal}
+        />
+      )}
     </div>
   );
 };
