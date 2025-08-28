@@ -7,21 +7,27 @@ import Loading from "@/components/ui/Loading";
 import Error from "@/components/ui/Error";
 import ApperIcon from "@/components/ApperIcon";
 import contactService from "@/services/api/contactService";
+import dealService from "@/services/api/dealService";
 import { format } from "date-fns";
 
 const Dashboard = () => {
-  const { onMenuClick } = useOutletContext();
+const { onMenuClick } = useOutletContext();
   const [dashboardData, setDashboardData] = useState(null);
+  const [dealAnalytics, setDealAnalytics] = useState(null);
   const [recentContacts, setRecentContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const loadDashboardData = async () => {
+const loadDashboardData = async () => {
     try {
       setError(null);
       setLoading(true);
       
-      const contacts = await contactService.getAll();
+      const [contacts, analytics] = await Promise.all([
+        contactService.getAll(),
+        dealService.getAnalytics()
+      ]);
+      
       const totalContacts = contacts.length;
       const activeContacts = contacts.filter(c => c.status === "active").length;
       
@@ -36,6 +42,7 @@ const Dashboard = () => {
         recentContactsCount: recent.length
       });
       
+      setDealAnalytics(analytics);
       setRecentContacts(recent);
     } catch (err) {
       setError("Failed to load dashboard data");
@@ -96,26 +103,29 @@ const Dashboard = () => {
             change="+12%"
             changeType="positive"
           />
-          <MetricCard
+<MetricCard
             title="Active Deals"
-            value="Coming Soon"
+            value={dealAnalytics?.totalDeals || 0}
             icon="Target"
             gradient="from-green-500 to-green-600"
-            isPlaceholder={true}
+            change={dealAnalytics?.dealChange}
+            changeType={dealAnalytics?.dealChange?.startsWith('+') ? "positive" : "negative"}
           />
           <MetricCard
-            title="Monthly Revenue"
-            value="Coming Soon"
+            title="Pipeline Value"
+            value={dealAnalytics?.totalPipelineValue || "$0"}
             icon="DollarSign"
             gradient="from-purple-500 to-purple-600"
-            isPlaceholder={true}
+            change={dealAnalytics?.valueChange}
+            changeType={dealAnalytics?.valueChange?.startsWith('+') ? "positive" : "negative"}
           />
           <MetricCard
-            title="Activities"
-            value="Coming Soon"
-            icon="Activity"
+            title="Avg. Cycle Time"
+            value={dealAnalytics ? `${dealAnalytics.avgDaysInPipeline} days` : "0 days"}
+            icon="Clock"
             gradient="from-orange-500 to-orange-600"
-            isPlaceholder={true}
+            change={dealAnalytics?.cycleTimeChange}
+            changeType={dealAnalytics?.cycleTimeChange?.startsWith('-') ? "positive" : "negative"}
           />
         </div>
 
@@ -209,9 +219,9 @@ const Dashboard = () => {
                 <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center mr-4">
                   <ApperIcon name="Target" size={20} className="text-white" />
                 </div>
-                <div className="text-left">
+<div className="text-left">
                   <p className="font-medium text-gray-900">Create New Deal</p>
-                  <p className="text-sm text-gray-600">Coming soon - Track opportunities</p>
+                  <p className="text-sm text-gray-600">Track sales opportunities</p>
                 </div>
               </motion.button>
 
@@ -223,9 +233,9 @@ const Dashboard = () => {
                 <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center mr-4">
                   <ApperIcon name="BarChart3" size={20} className="text-white" />
                 </div>
-                <div className="text-left">
+<div className="text-left">
                   <p className="font-medium text-gray-900">View Reports</p>
-                  <p className="text-sm text-gray-600">Coming soon - Analytics dashboard</p>
+                  <p className="text-sm text-gray-600">Analyze sales performance</p>
                 </div>
               </motion.button>
             </div>

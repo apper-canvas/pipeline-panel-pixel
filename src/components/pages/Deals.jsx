@@ -6,17 +6,18 @@ import ApperIcon from "@/components/ApperIcon";
 import Button from "@/components/atoms/Button";
 import DealColumn from "@/components/molecules/DealColumn";
 import DealModal from "@/components/organisms/DealModal";
+import MetricCard from "@/components/molecules/MetricCard";
 import dealService from "@/services/api/dealService";
 import { toast } from "react-toastify";
 const Deals = () => {
   const { onMenuClick } = useOutletContext();
 
 const [deals, setDeals] = useState([]);
+  const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingDeal, setEditingDeal] = useState(null);
   const [draggedDeal, setDraggedDeal] = useState(null);
-
   const pipelineStages = [
     { id: "lead", name: "Lead", color: "from-blue-400 to-blue-500" },
     { id: "qualified", name: "Qualified", color: "from-yellow-400 to-yellow-500" },
@@ -29,11 +30,13 @@ const [deals, setDeals] = useState([]);
     loadDeals();
   }, []);
 
-  const loadDeals = async () => {
+const loadDeals = async () => {
     try {
       setLoading(true);
       const dealsData = await dealService.getAll();
+      const analyticsData = await dealService.getAnalytics();
       setDeals(dealsData);
+      setAnalytics(analyticsData);
     } catch (error) {
       toast.error("Failed to load deals");
     } finally {
@@ -63,7 +66,7 @@ const [deals, setDeals] = useState([]);
     }
   };
 
-  const handleSaveDeal = async (dealData) => {
+const handleSaveDeal = async (dealData) => {
     try {
       if (editingDeal) {
         const updatedDeal = await dealService.update(editingDeal.Id, dealData);
@@ -75,6 +78,9 @@ const [deals, setDeals] = useState([]);
         toast.success("Deal created successfully");
       }
       setShowModal(false);
+      // Reload analytics after changes
+      const analyticsData = await dealService.getAnalytics();
+      setAnalytics(analyticsData);
     } catch (error) {
       throw error; // Let modal handle the error
     }
@@ -136,22 +142,69 @@ return (
             <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
-          <div className="flex space-x-6 overflow-x-auto pb-6">
-            {pipelineStages.map((stage, index) => (
-              <DealColumn
-                key={stage.id}
-                stage={stage}
-                deals={getDealsForStage(stage.id)}
-                onEditDeal={handleEditDeal}
-                onDeleteDeal={handleDeleteDeal}
-                onDragStart={handleDragStart}
-                onDragEnd={handleDragEnd}
-                onDrop={handleDrop}
-                draggedDeal={draggedDeal}
-                index={index}
-              />
-            ))}
-          </div>
+          <>
+            {/* Analytics Section */}
+            {analytics && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-8"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                  <MetricCard
+                    title="Total Pipeline Value"
+                    value={analytics.totalPipelineValue}
+                    icon="DollarSign"
+                    gradient="from-green-500 to-green-600"
+                    change={analytics.valueChange}
+                    changeType={analytics.valueChange?.startsWith('+') ? "positive" : "negative"}
+                  />
+                  <MetricCard
+                    title="Active Deals"
+                    value={analytics.totalDeals}
+                    icon="Target"
+                    gradient="from-blue-500 to-blue-600"
+                    change={analytics.dealChange}
+                    changeType={analytics.dealChange?.startsWith('+') ? "positive" : "negative"}
+                  />
+                  <MetricCard
+                    title="Avg. Days in Pipeline"
+                    value={`${analytics.avgDaysInPipeline} days`}
+                    icon="Clock"
+                    gradient="from-purple-500 to-purple-600"
+                    change={analytics.cycleTimeChange}
+                    changeType={analytics.cycleTimeChange?.startsWith('-') ? "positive" : "negative"}
+                  />
+                  <MetricCard
+                    title="Bottleneck Stage"
+                    value={analytics.bottleneckStage}
+                    icon="AlertTriangle"
+                    gradient="from-orange-500 to-orange-600"
+                    change={`${analytics.bottleneckDays} days avg`}
+                  />
+                </div>
+              </motion.div>
+            )}
+
+            {/* Pipeline Columns */}
+            <div className="flex space-x-6 overflow-x-auto pb-6">
+              {pipelineStages.map((stage, index) => (
+                <DealColumn
+                  key={stage.id}
+                  stage={stage}
+                  deals={getDealsForStage(stage.id)}
+                  analytics={analytics?.stageAnalytics?.[stage.id]}
+                  onEditDeal={handleEditDeal}
+                  onDeleteDeal={handleDeleteDeal}
+                  onDragStart={handleDragStart}
+                  onDragEnd={handleDragEnd}
+                  onDrop={handleDrop}
+                  draggedDeal={draggedDeal}
+                  index={index}
+                />
+              ))}
+            </div>
+          </>
         )}
       </div>
 

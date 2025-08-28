@@ -3,8 +3,9 @@ import DealCard from "./DealCard";
 import ApperIcon from "@/components/ApperIcon";
 
 const DealColumn = ({ 
-  stage, 
+stage, 
   deals, 
+  analytics,
   onEditDeal, 
   onDeleteDeal, 
   onDragStart, 
@@ -54,12 +55,20 @@ const DealColumn = ({
           </div>
         </div>
         
-        {totalValue > 0 && (
-          <div className="text-sm text-gray-600 flex items-center">
-            <ApperIcon name="DollarSign" size={14} className="mr-1" />
-            <span className="font-medium">{formatCurrency(totalValue)}</span>
-          </div>
-        )}
+<div className="space-y-1">
+          {totalValue > 0 && (
+            <div className="text-sm text-gray-600 flex items-center">
+              <ApperIcon name="DollarSign" size={14} className="mr-1" />
+              <span className="font-medium">{formatCurrency(totalValue)}</span>
+            </div>
+          )}
+          {analytics && (
+            <div className="text-xs text-gray-500 flex items-center">
+              <ApperIcon name="Clock" size={12} className="mr-1" />
+              <span>{analytics.avgDaysInStage} days avg</span>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="space-y-3 min-h-[200px]">

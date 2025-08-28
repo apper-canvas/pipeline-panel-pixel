@@ -79,7 +79,7 @@ onClick={(e) => {
         </div>
       </div>
 
-      <div className="space-y-2">
+<div className="space-y-2">
         <div className="flex items-center text-gray-600 text-xs">
           <ApperIcon name="User" size={12} className="mr-1.5" />
           <span className="truncate">{deal.contactName}</span>
@@ -103,6 +103,15 @@ onClick={(e) => {
             </Badge>
           )}
         </div>
+
+        {deal.stageChangedAt && (
+          <div className="flex items-center text-gray-500 text-xs">
+            <ApperIcon name="Clock" size={12} className="mr-1.5" />
+            <span>
+              In stage {Math.ceil((new Date() - new Date(deal.stageChangedAt)) / (1000 * 60 * 60 * 24))} days
+            </span>
+          </div>
+        )}
       </div>
 
       <div className="mt-3 pt-3 border-t border-gray-100">
