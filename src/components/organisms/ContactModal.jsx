@@ -206,13 +206,29 @@ const ContactModal = ({ contact, isOpen, onClose, onSave }) => {
                 </div>
 
                 {/* Company Info */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Input
-                    label="Company"
-                    value={formData.company}
-                    onChange={(e) => handleInputChange("company", e.target.value)}
-                    placeholder="Enter company name"
-                  />
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">Company</label>
+                    <input
+                      list="companies"
+                      value={formData.company}
+                      onChange={(e) => handleInputChange("company", e.target.value)}
+                      placeholder="Start typing company name..."
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
+                    />
+                    <datalist id="companies">
+                      <option value="TechCorp Solutions" />
+                      <option value="InnovatePlus" />
+                      <option value="Global Ventures" />
+                      <option value="StartupXYZ" />
+                      <option value="RetailConnect" />
+                      <option value="Finance First" />
+                      <option value="HealthPlus Solutions" />
+                      <option value="EduTech Institute" />
+                      <option value="LogisticsPro" />
+                      <option value="Marketing Max Agency" />
+                    </datalist>
+                  </div>
                   <Input
                     label="Position"
                     value={formData.position}

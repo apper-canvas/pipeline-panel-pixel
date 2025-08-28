@@ -5,6 +5,7 @@ import Dashboard from "@/components/pages/Dashboard";
 import Contacts from "@/components/pages/Contacts";
 import Deals from "@/components/pages/Deals";
 import Companies from "@/components/pages/Companies";
+import CompanyProfile from "@/components/pages/CompanyProfile";
 import Reports from "@/components/pages/Reports";
 import Settings from "@/components/pages/Settings";
 
@@ -12,12 +13,13 @@ function App() {
   return (
     <BrowserRouter>
       <div className="font-inter">
-        <Routes>
+<Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="contacts" element={<Contacts />} />
             <Route path="deals" element={<Deals />} />
             <Route path="companies" element={<Companies />} />
+            <Route path="companies/:id" element={<CompanyProfile />} />
             <Route path="reports" element={<Reports />} />
             <Route path="settings" element={<Settings />} />
           </Route>

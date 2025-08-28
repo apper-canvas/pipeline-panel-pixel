@@ -9,7 +9,7 @@ const Header = ({
   onMenuClick, 
   showSearch = false, 
   onSearch,
-  searchPlaceholder,
+  searchPlaceholder = "Search...",
   actionButton = null 
 }) => {
   return (
