@@ -9,6 +9,16 @@ const dealService = {
     return [...deals];
   },
 
+  // Get deals by company
+  getByCompany: async (companyName) => {
+    await new Promise(resolve => setTimeout(resolve, 250));
+    if (!companyName) return [];
+    const companyDeals = deals.filter(deal => 
+      deal.company && deal.company.toLowerCase() === companyName.toLowerCase()
+    );
+    return [...companyDeals];
+  },
+
   // Get deal by ID
   getById: async (id) => {
     await new Promise(resolve => setTimeout(resolve, 200));
@@ -22,7 +32,7 @@ const dealService = {
   // Create new deal
   create: async (dealData) => {
     await new Promise(resolve => setTimeout(resolve, 400));
-const newDeal = {
+    const newDeal = {
       ...dealData,
       Id: Math.max(...deals.map(d => d.Id), 0) + 1,
       createdAt: new Date().toISOString(),
@@ -116,7 +126,7 @@ const newDeal = {
     }
     
     deals[index] = {
-...deals[index],
+      ...deals[index],
       ...dealData,
       Id: parseInt(id),
       updatedAt: new Date().toISOString(),
