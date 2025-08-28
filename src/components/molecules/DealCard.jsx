@@ -9,7 +9,8 @@ const DealCard = ({
   onDelete, 
   onDragStart, 
   onDragEnd, 
-  isDragging 
+  isDragging,
+  onClick
 }) => {
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-US', {
@@ -29,19 +30,20 @@ const DealCard = ({
   const isOverdue = new Date(deal.expectedCloseDate) < new Date();
 
   return (
-    <motion.div
+<motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ 
         y: -2,
         boxShadow: "0 20px 40px -10px rgba(0, 0, 0, 0.1)"
       }}
-      className={`bg-white rounded-lg border border-gray-200 p-4 cursor-grab transition-all duration-200 shadow-sm hover:shadow-md ${
+      className={`bg-white rounded-lg border border-gray-200 p-4 cursor-pointer transition-all duration-200 shadow-sm hover:shadow-md ${
         isDragging ? "opacity-50 transform rotate-2" : ""
       }`}
       draggable
       onDragStart={() => onDragStart(deal)}
       onDragEnd={onDragEnd}
+      onClick={() => onEdit(deal)}
     >
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
@@ -55,7 +57,7 @@ const DealCard = ({
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            onClick={(e) => {
+onClick={(e) => {
               e.stopPropagation();
               onEdit(deal);
             }}

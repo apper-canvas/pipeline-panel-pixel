@@ -24,10 +24,11 @@ const dealService = {
     await new Promise(resolve => setTimeout(resolve, 400));
     
     const newDeal = {
-      ...dealData,
+...dealData,
       Id: Math.max(...deals.map(d => d.Id), 0) + 1,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      stageChangedAt: dealData.stage ? new Date().toISOString() : null
     };
     
     deals.push(newDeal);
@@ -44,10 +45,13 @@ const dealService = {
     }
     
     deals[index] = {
-      ...deals[index],
+...deals[index],
       ...dealData,
       Id: parseInt(id),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      ...(dealData.stage && dealData.stage !== deals[index].stage ? {
+        stageChangedAt: new Date().toISOString()
+      } : {})
     };
     
     return { ...deals[index] };

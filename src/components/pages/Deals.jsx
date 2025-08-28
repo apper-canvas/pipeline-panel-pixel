@@ -98,7 +98,10 @@ const [deals, setDeals] = useState([]);
       ));
 
       // Update on server
-      await dealService.update(deal.Id, { stage: stageId });
+await dealService.update(deal.Id, { 
+        stage: stageId,
+        stageChangedAt: new Date().toISOString()
+      });
       toast.success(`Deal moved to ${pipelineStages.find(s => s.id === stageId)?.name}`);
     } catch (error) {
       // Revert on error
